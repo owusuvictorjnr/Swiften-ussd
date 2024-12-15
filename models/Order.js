@@ -1,22 +1,37 @@
 import mongoose from "mongoose";
 
-
 const OrderSchema = new mongoose.Schema({
   userId: {
-    type: Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
   },
 
-  type: {
+  orderId: {
     type: String,
-    enum: ["parcel", "food", "grocery"],
+    // required: true,
+    unique: true,
+  },
+
+  pickupLocation: {
+    type: String,
+    required: true,
+  },
+
+  deliveryLocation: {
+    type: String,
+    required: true,
+  },
+
+  packageType: {
+    type: String,
+    enum: ["small", "medium", "large"],
     required: true,
   },
 
   status: {
     type: String,
-    enum: ["pending", "completed", "cancelled"],
+    enum: ["pending", "in-transit", "delivered", "cancelled"],
     default: "pending",
   },
 
