@@ -13,6 +13,26 @@ connect();
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 
+// session to store to track user session
+const sessionStore = {};
+const TIMEOUT_DURATION = 2 * 60 * 1000; // 2 minutes
+
+// middleware to check session timeout
+const checkTimeout = (phoneNumber) => {
+  if (
+    sessionStore[phoneNumber] &&
+    current - sessionStore[phoneNumber].timestamp < TIMEOUT_DURATION
+  ) {
+    // clear session
+    delete sessionStore[phoneNumber];
+
+    // return true if session has timed out
+    return true;
+  }
+  //   return false if session is still active
+  return false;
+};
+
 // Africa's Talking SMS initialization
 const AT = africastalking({
   apiKey: process.env.AT_API_KEY,
@@ -30,6 +50,19 @@ app.post("/ussd", async (req, res) => {
   let resMessage = "";
 
   try {
+    const isTimedOut = checkTimeout(phoneNumber);
+
+    // check for session timeout
+    if (isTimedOut) {
+      resMessage = `END Session timed out. Please try again.`;
+      res.set("Content-Type", "text/plain");
+    }
+
+    //update session timestamp
+    sessionStore[phoneNumber] = {
+      timestamp: new Date().getTime(),
+    };
+
     let user = await User.findOne({ phoneNumber });
 
     // Main Menu
